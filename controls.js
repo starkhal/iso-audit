@@ -1006,13 +1006,11 @@ function renderTabs() {
 
   visibleSections.forEach(s => {
     const inSec = CONTROLS.filter(c => c.section === s && activeFilter.has(c.id));
-    let answered = 0;
-    inSec.forEach(c => c.questions.forEach(q => { if (STORE[q.id]) answered++; }));
-    let totalQ = 0;
-    inSec.forEach(c => totalQ += c.questions.length);
+    const answeredControls = inSec.filter(c => controlResult(c).status !== 'pending').length;
+    const totalControls = inSec.length;
     const t = document.createElement('button');
     t.className = 'tab' + (s === activeSection ? ' active' : '');
-    t.innerHTML = `<b>Chapter ${s}</b> · ${SECTION_META[s].name} <span class="pill">${answered}/${totalQ}</span>`;
+    t.innerHTML = `<b>Chapter ${s}</b> · ${SECTION_META[s].name} <span class="pill">${answeredControls}/${totalControls}</span>`;
     t.onclick = () => {
       activeSection = s;
       renderTabs();
@@ -1156,9 +1154,17 @@ function renderReport() {
     });
   });
 
-  html += `<div style="margin:30px 0"><button class="btn" id="btnBack">← Back to questionnaire</button></div>`;
+  html += `
+    <div style="margin:30px 0;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btnBack">← Back to questionnaire</button>
+      <button class="btn" id="btnPdf" style="border-color:var(--accent);color:var(--accent)">↓ Generate PDF</button>
+    </div>`;
   host.innerHTML = html;
   document.getElementById('btnBack').onclick = showAssess;
+  document.getElementById('btnPdf').onclick = () => {
+    document.title = 'ISO 27002 Self-Assessment — ' + new Date().toISOString().slice(0,10);
+    window.print();
+  };
 }
 
 /* ---------------- view switching ---------------- */

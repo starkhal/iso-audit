@@ -31,7 +31,7 @@
     color:var(--ink);font-family:var(--sans);line-height:1.5;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  .wrap{max-width:1400px;margin:0 auto;padding:0 20px}
 
   /* ---------- header ---------- */
   header.top{
@@ -177,6 +177,64 @@
     .bar{width:70px}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+
+  /* ---------- print / PDF ---------- */
+  @media print {
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { background: #fff; color: #111; font-family: 'Segoe UI', Arial, sans-serif; }
+    header.top, nav.tabs, #assess, .meter, footer,
+    #btnBack, #btnPdf, .filter-row { display: none !important; }
+    #report { display: block !important; color: #111; }
+
+    .report-head h2 { color: #111; font-size: 22px; }
+    .report-head p   { color: #555; }
+
+    .scorecards { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin: 16px 0; }
+    .score { border: 1px solid #ddd; border-radius: 8px; padding: 14px; background: #f9fafb; }
+    .score .n { font-size: 26px; font-weight: 700; line-height: 1; }
+    .score .l { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #666; margin-top: 6px; }
+    .score.ok .n  { color: #059669; }
+    .score.no .n  { color: #dc2626; }
+    .score.part .n{ color: #d97706; }
+    .score .n     { color: #1e40af; }
+
+    .rsec { color: #6b7280; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin: 20px 0 8px;
+            font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+
+    .rrow { border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; margin-bottom: 8px;
+            break-inside: avoid; page-break-inside: avoid; overflow: visible; }
+    .rrow-head { display: flex; align-items: center; gap: 10px; padding: 11px 14px; }
+    .rrow-head .t { flex: 1; font-size: 13px; font-weight: 600; color: #111; }
+
+    .cid { font-size: 11px; font-weight: 600; color: #92400e; background: #fef3c7;
+           border: 1px solid #d97706; border-radius: 5px; padding: 3px 7px; white-space: nowrap; }
+
+    .badge { font-size: 10px; letter-spacing: .05em; text-transform: uppercase;
+             padding: 4px 9px; border-radius: 20px; font-weight: 600; }
+    .badge.ok   { background: #d1fae5; color: #065f46; }
+    .badge.no   { background: #fee2e2; color: #991b1b; }
+    .badge.part { background: #fef3c7; color: #92400e; }
+    .badge.na   { background: #f3f4f6; color: #4b5563; }
+
+    .bar { height: 5px; border-radius: 5px; background: #e5e7eb; width: 100px; overflow: hidden; flex-shrink: 0; }
+    .bar > i { display: block; height: 100%; border-radius: 5px; }
+    .pct { font-size: 11px; width: 36px; text-align: right; color: #555; }
+
+    .gaps { padding: 0 14px 12px; border-top: 1px solid #f3f4f6; }
+    .gaps ul { margin: 8px 0 0; padding: 0; list-style: none; }
+    .gaps li  { display: flex; gap: 8px; font-size: 12px; padding: 4px 0; color: #374151; }
+    .gaps .mk { flex-shrink: 0; margin-top: 3px; }
+    .gaps .lab{ font-size: 10px; letter-spacing: .1em; text-transform: uppercase; margin-top: 5px; font-weight: 600; }
+
+    .dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+    .dot.ok   { background: #10b981; }
+    .dot.no   { background: #ef4444; }
+    .dot.part { background: #f59e0b; }
+
+    .nogaps { font-size: 12px; padding: 10px 14px; border-top: 1px solid #f3f4f6; }
+
+    .empty { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -210,7 +268,7 @@
   <div class="filter-row">
     <div class="filter-label">Controls to assess</div>
     <input type="text" id="filterInput" class="filter-input"
-           placeholder="Enter control IDs — e.g.  5.1  5.3  6.2  7.1  8.4"
+           placeholder="Enter control IDs"
            autocomplete="off" spellcheck="false">
   </div>
 
@@ -220,9 +278,7 @@
 
 <main class="wrap" id="report"></main>
 
-<footer class="wrap">
-  Self-assessment aid, not a certification. Questions are reverse-engineered from typical audit evidence and grounded in the organization's ISMS. Conformance threshold per control: <code>weighted score ≥ 80%</code> of in-scope, answered items.
-</footer>
+<footer></footer>
 
 <script src="controls.js"></script>
 </body>
