@@ -153,6 +153,17 @@
   .nogaps{font-size:13px;color:var(--ok);padding:12px 16px;border-top:1px solid #1c2b44}
 
   .empty{padding:60px 20px;text-align:center;color:var(--ink-faint)}
+
+  /* ---------- filter row ---------- */
+  .filter-row{margin:24px 0 4px}
+  .filter-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);font-family:var(--mono);margin-bottom:8px}
+  .filter-input{
+    width:100%;background:var(--panel-solid);border:1px solid var(--line);
+    border-radius:var(--radius);color:var(--ink);font-family:var(--mono);
+    font-size:13px;padding:12px 16px;outline:none;transition:border-color .15s;
+  }
+  .filter-input::placeholder{color:var(--ink-faint)}
+  .filter-input:focus{border-color:var(--blue)}
   footer{padding:40px 0;color:var(--ink-faint);font-size:12px;border-top:1px solid var(--line);margin-top:40px}
   footer code{font-family:var(--mono);color:var(--ink-soft)}
 
@@ -173,7 +184,7 @@
   <div class="wrap top-row">
     <div class="brand">
       <span class="tag">ISO 27002:2022</span>
-      <h1>Controls Self-Assessment · Clauses 5–7</h1>
+      <h1>Controls Self-Assessment · Chapters 5–8</h1>
     </div>
     <div class="top-actions">
       <button class="btn ghost" id="btnReset">Reset</button>
@@ -187,7 +198,7 @@
   <section class="hero">
     <h2>Answer the questions. <em>See exactly which controls hold — and where the gaps are.</em></h2>
     <p>This form turns each non-technical ISO 27002:2022 control into plain audit questions. For every control, answer what's actually in place. A control is marked <strong>conformant</strong> when its weighted answers clear the threshold; anything short of that is flagged with the specific points to fix.</p>
-    <p style="color:var(--ink-faint);font-size:13px">59 controls · 222 questions · grouped by Organizational, People and Physical. Answer <strong>N/A</strong> for anything that doesn't apply to your scope — it won't count against you.</p>
+    <p style="color:var(--ink-faint);font-size:13px">Chapters 5–8 · Organizational, People, Physical and Technological controls. Answer <strong>N/A</strong> for anything that doesn't apply to your scope — it won't count against you.</p>
     <div class="legend">
       <span><i class="dot ok"></i> Yes — in place</span>
       <span><i class="dot part"></i> Partial — partly in place</span>
@@ -195,6 +206,13 @@
       <span><i class="dot na"></i> N/A — out of scope</span>
     </div>
   </section>
+
+  <div class="filter-row">
+    <div class="filter-label">Controls to assess</div>
+    <input type="text" id="filterInput" class="filter-input"
+           placeholder="Enter control IDs — e.g.  5.1  5.3  6.2  7.1  8.4"
+           autocomplete="off" spellcheck="false">
+  </div>
 
   <nav class="tabs" id="tabs"></nav>
   <div id="controls"></div>
