@@ -178,6 +178,48 @@
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
 
+  /* ---------- auth overlay ---------- */
+  #authOverlay{
+    position:fixed;inset:0;z-index:200;
+    background:radial-gradient(1000px 500px at 20% 110%,#1a2b47 0%,transparent 60%),var(--bg);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .auth-box{width:100%;max-width:420px}
+  .auth-tag{
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--accent);
+    text-transform:uppercase;margin-bottom:28px;display:flex;align-items:center;gap:10px;
+  }
+  .auth-tag::before{content:'';display:inline-block;width:24px;height:2px;background:var(--accent);flex-shrink:0}
+  .auth-box h2{font-size:26px;font-weight:700;margin:0 0 10px;letter-spacing:-.015em;color:var(--ink)}
+  .auth-box p{color:var(--ink-soft);font-size:14px;line-height:1.65;margin:0 0 28px}
+  .auth-label{
+    display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    font-family:var(--mono);color:var(--ink-faint);margin-bottom:8px;
+  }
+  .auth-input{
+    width:100%;background:var(--panel-solid);border:1px solid var(--line);
+    border-radius:var(--radius);color:var(--ink);font-family:var(--sans);
+    font-size:15px;padding:14px 16px;outline:none;transition:border-color .15s;box-sizing:border-box;
+  }
+  .auth-input:focus{border-color:var(--blue)}
+  .auth-input.otp{font-family:var(--mono);font-size:32px;letter-spacing:10px;text-align:center;padding:18px 16px}
+  .auth-err{color:var(--no);font-size:13px;margin-top:10px;min-height:20px;line-height:1.4}
+  .auth-btn{
+    width:100%;margin-top:18px;padding:14px;border-radius:var(--radius);border:none;
+    background:var(--accent);color:#111;font-family:var(--sans);font-size:15px;
+    font-weight:600;cursor:pointer;transition:background .15s;
+  }
+  .auth-btn:hover{background:#f5b842}
+  .auth-btn:disabled{opacity:.45;cursor:not-allowed}
+  .auth-back{
+    width:100%;margin-top:10px;padding:11px 16px;border-radius:8px;
+    border:1px solid var(--line);background:transparent;color:var(--ink-soft);
+    font-family:var(--sans);font-size:13px;cursor:pointer;transition:.15s;
+  }
+  .auth-back:hover{border-color:var(--ink-faint);color:var(--ink)}
+  .auth-hint{font-size:12px;color:var(--ink-faint);margin-top:14px;text-align:center;line-height:1.5}
+  .auth-resend{color:var(--accent);cursor:pointer;text-decoration:underline}
+
   /* ---------- print / PDF ---------- */
   @media print {
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -238,6 +280,45 @@
 </style>
 </head>
 <body>
+
+<!-- AUTH OVERLAY — removed from DOM after successful login -->
+<div id="authOverlay">
+  <div class="auth-box">
+
+    <!-- Step 1 — Email -->
+    <div id="authStep1">
+      <div class="auth-tag">ISO 27002:2022 — Self-Assessment</div>
+      <h2>Sign in to continue</h2>
+      <p>Enter your Air France professional email. We'll send you a 6-digit code to access the audit tool.</p>
+      <label class="auth-label" for="authEmail">Professional email</label>
+      <input id="authEmail" class="auth-input" type="email"
+             placeholder="firstname.lastname@airfrance.fr"
+             autocomplete="email" autocapitalize="none" spellcheck="false">
+      <div id="authErr1" class="auth-err"></div>
+      <button id="authSendBtn" class="auth-btn">Send access code →</button>
+    </div>
+
+    <!-- Step 2 — OTP -->
+    <div id="authStep2" style="display:none">
+      <div class="auth-tag">ISO 27002:2022 — Self-Assessment</div>
+      <h2>Enter your code</h2>
+      <p>We sent a 6-digit code to <strong id="authEmailDisplay" style="color:var(--ink)"></strong>. It expires in 10 minutes.</p>
+      <label class="auth-label" for="authOtp">Access code</label>
+      <input id="authOtp" class="auth-input otp" type="text"
+             inputmode="numeric" maxlength="6"
+             placeholder="· · · · · ·" autocomplete="one-time-code">
+      <div id="authErr2" class="auth-err"></div>
+      <button id="authVerifyBtn" class="auth-btn">Access the tool →</button>
+      <button id="authBackBtn" class="auth-back">← Use a different email</button>
+      <p class="auth-hint">No email? Check your spam folder or
+        <span id="authResendBtn" class="auth-resend">resend the code</span>.
+      </p>
+    </div>
+
+  </div>
+</div>
+<!-- END AUTH OVERLAY -->
+
 <header class="top">
   <div class="wrap top-row">
     <div class="brand">
@@ -281,5 +362,149 @@
 <footer></footer>
 
 <script src="controls.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  function hasValidSession() {
+    try {
+      const raw = sessionStorage.getItem('iso_session');
+      if (!raw) return false;
+      const { expiry } = JSON.parse(raw);
+      return typeof expiry === 'number' && Math.floor(Date.now() / 1000) < expiry;
+    } catch { return false; }
+  }
+
+  function unlock() {
+    const overlay = document.getElementById('authOverlay');
+    overlay.style.transition = 'opacity .35s ease';
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 380);
+  }
+
+  // Already authenticated — skip the overlay immediately
+  if (hasValidSession()) { unlock(); return; }
+
+  let challenge = '';
+  let pendingEmail = '';
+
+  const step1       = document.getElementById('authStep1');
+  const step2       = document.getElementById('authStep2');
+  const emailInput  = document.getElementById('authEmail');
+  const otpInput    = document.getElementById('authOtp');
+  const err1        = document.getElementById('authErr1');
+  const err2        = document.getElementById('authErr2');
+  const sendBtn     = document.getElementById('authSendBtn');
+  const verifyBtn   = document.getElementById('authVerifyBtn');
+
+  async function sendOtp() {
+    const email = emailInput.value.trim().toLowerCase();
+    err1.textContent = '';
+
+    const domain = email.split('@')[1];
+    if (!domain || domain !== 'airfrance.fr') {
+      err1.textContent = 'Please use your @airfrance.fr professional email.';
+      emailInput.focus();
+      return;
+    }
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Sending…';
+
+    try {
+      const res = await fetch('/.netlify/functions/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        err1.textContent = data.error || 'Failed to send code. Please try again.';
+        return;
+      }
+      challenge = data.challenge;
+      pendingEmail = email;
+      document.getElementById('authEmailDisplay').textContent = email;
+      step1.style.display = 'none';
+      step2.style.display = 'block';
+      otpInput.value = '';
+      otpInput.focus();
+    } catch {
+      err1.textContent = 'Network error. Check your connection and try again.';
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send access code →';
+    }
+  }
+
+  async function verifyOtp() {
+    const otp = otpInput.value.trim().replace(/\s/g, '');
+    err2.textContent = '';
+
+    if (!/^\d{6}$/.test(otp)) {
+      err2.textContent = 'Enter the 6-digit code from your email.';
+      otpInput.focus();
+      return;
+    }
+
+    verifyBtn.disabled = true;
+    verifyBtn.textContent = 'Verifying…';
+
+    try {
+      const res = await fetch('/.netlify/functions/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingEmail, otp, challenge }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.error === 'Code expired') {
+          err2.textContent = 'Code expired. Click "Use a different email" to request a new one.';
+        } else {
+          err2.textContent = 'Invalid code. Double-check your email and try again.';
+        }
+        return;
+      }
+      // Store session (8 hours)
+      sessionStorage.setItem('iso_session', JSON.stringify({
+        email: pendingEmail,
+        expiry: Math.floor(Date.now() / 1000) + 8 * 3600,
+        token: data.token,
+      }));
+      unlock();
+    } catch {
+      err2.textContent = 'Network error. Check your connection and try again.';
+    } finally {
+      verifyBtn.disabled = false;
+      verifyBtn.textContent = 'Access the tool →';
+    }
+  }
+
+  function goBackToStep1() {
+    step2.style.display = 'none';
+    step1.style.display = 'block';
+    otpInput.value = '';
+    err2.textContent = '';
+    emailInput.focus();
+  }
+
+  sendBtn.addEventListener('click', sendOtp);
+  emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendOtp(); });
+  verifyBtn.addEventListener('click', verifyOtp);
+  otpInput.addEventListener('keydown', e => { if (e.key === 'Enter') verifyOtp(); });
+  document.getElementById('authBackBtn').addEventListener('click', goBackToStep1);
+  document.getElementById('authResendBtn').addEventListener('click', () => {
+    goBackToStep1();
+    sendOtp();
+  });
+
+  // Auto-submit when 6 digits are entered
+  otpInput.addEventListener('input', () => {
+    if (/^\d{6}$/.test(otpInput.value.trim())) verifyOtp();
+  });
+
+  emailInput.focus();
+}());
+</script>
 </body>
 </html>
