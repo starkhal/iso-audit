@@ -289,10 +289,10 @@
     <div id="authStep1">
       <div class="auth-tag">ISO 27001 Control Simplification Form</div>
       <h2>Sign in to continue</h2>
-      <p>Enter your Air France professional email. We'll send you a 6-digit code to access the audit tool.</p>
+      <p>Enter your Air France or KLM professional email. We'll send you a 6-digit code to access the audit tool.</p>
       <label class="auth-label" for="authEmail">Professional email</label>
       <input id="authEmail" class="auth-input" type="email"
-             placeholder="firstname.lastname@airfrance.fr"
+             placeholder="firstname.lastname@airfrance.fr or @klm.com"
              autocomplete="email" autocapitalize="none" spellcheck="false">
       <div id="authErr1" class="auth-err"></div>
       <button id="authSendBtn" class="auth-btn">Send access code →</button>
@@ -401,8 +401,9 @@
     err1.textContent = '';
 
     const domain = email.split('@')[1];
-    if (!domain || domain !== 'airfrance.fr') {
-      err1.textContent = 'Please use your @airfrance.fr professional email.';
+    const ALLOWED_DOMAINS = ['airfrance.fr', 'klm.com'];
+    if (!domain || !ALLOWED_DOMAINS.includes(domain)) {
+      err1.textContent = 'Please use your @airfrance.fr or @klm.com professional email.';
       emailInput.focus();
       return;
     }

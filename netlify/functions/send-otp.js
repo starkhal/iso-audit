@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 
-const ALLOWED_DOMAINS = ['airfrance.fr'];
+const ALLOWED_DOMAINS = ['airfrance.fr', 'klm.com'];
 const OTP_EXPIRY_SEC = 10 * 60; // 10 minutes
 
 exports.handler = async (event) => {
